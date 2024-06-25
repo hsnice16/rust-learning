@@ -1,3 +1,5 @@
+use generics::{NewsArticle, Summary, Tweet};
+
 #[derive(Debug)]
 struct Point<T> {
     x: T,
@@ -43,6 +45,24 @@ fn main() {
         longitude: 23.3423444,
     };
     println!("Coordinate: {coordinate:?}");
+
+    let tweet = Tweet {
+        username: String::from("hsnice16"),
+        content: String::from("changed the bio"),
+        reply: false,
+        retweet: false,
+    };
+    println!("1 new tweet: {}", tweet.summarize());
+
+    let article = NewsArticle {
+        headline: String::from("Penguins win the Stanley Cup Championship!"),
+        location: String::from("Pittsburgh, PA, USA"),
+        author: String::from("Iceburgh"),
+        content: String::from(
+            "The Pittsburgh Penguins once again are the best hockey team in the NHL.",
+        ),
+    };
+    println!("New arctile available! {}", article.summarize());
 }
 
 fn largest<T: std::cmp::PartialOrd>(list: &[T]) -> &T {
