@@ -1,4 +1,5 @@
 use generics::{NewsArticle, Summary, Tweet};
+use std::fmt::Display;
 
 #[derive(Debug)]
 struct Point<T> {
@@ -22,6 +23,21 @@ impl Point<f32> {
 struct Coordinate<T, U> {
     latitude: T,
     longitude: U,
+}
+
+struct ImportantExcerpt<'a> {
+    part: &'a str,
+}
+
+impl<'a> ImportantExcerpt<'a> {
+    fn level(&self) -> i32 {
+        3
+    }
+
+    fn announce_and_return_part(&self, announcement: &str) -> &str {
+        println!("Attention please: {announcement}");
+        self.part
+    }
 }
 
 fn main() {
@@ -63,6 +79,18 @@ fn main() {
         ),
     };
     println!("New arctile available! {}", article.summarize());
+
+    let string1 = String::from("abcd");
+    let string2 = "xyz";
+
+    let result = longest(&string1, string2, "");
+    println!("The longest string is: {result}");
+
+    let novel = String::from("Call me Ishmael. Some years ago...");
+    let first_sentence = novel.split('.').next().expect("Could not find a '.'");
+    let i = ImportantExcerpt {
+        part: first_sentence,
+    };
 }
 
 fn largest<T: std::cmp::PartialOrd>(list: &[T]) -> &T {
@@ -75,4 +103,16 @@ fn largest<T: std::cmp::PartialOrd>(list: &[T]) -> &T {
     }
 
     largest
+}
+
+fn longest<'a, T>(string1: &'a str, string2: &'a str, ann: T) -> &'a str
+where
+    T: Display,
+{
+    println!("Announcement! {ann}");
+    if string1.len() > string2.len() {
+        return string1;
+    }
+
+    string2
 }
