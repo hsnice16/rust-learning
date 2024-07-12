@@ -32,4 +32,11 @@ fn main() {
     assert_eq!(5, *y);
     assert_eq!(5, *z);
     assert_eq!(5, *s);
+
+    let name = MyBox::new(String::from("Rust"));
+    hello(&name);
+}
+
+fn hello(name: &str) -> () {
+    println!("Hello, {name}!");
 }
