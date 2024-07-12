@@ -1,37 +1,13 @@
-use smart_pointers::List::{Cons, Nil};
-use std::ops::Deref;
-
-struct MyBox<T>(T);
-
-impl<T> MyBox<T> {
-    fn new(x: T) -> MyBox<T> {
-        MyBox(x)
-    }
-}
-
-impl<T> Deref for MyBox<T> {
-    type Target = T;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-struct CustomSmartPointer {
-    data: String,
-}
-
-impl Drop for CustomSmartPointer {
-    fn drop(&mut self) {
-        println!("Dropping CustomSmartPointer with data {}!", self.data);
-    }
-}
+use smart_pointers::{CustomSmartPointer, List, MyBox, Rc, RcList};
 
 fn main() {
     let b = Box::new(5);
     println!("b = {b}");
 
-    let list = Cons(1, Box::new(Cons(2, Box::new(Cons(3, Box::new(Nil))))));
+    let list = List::Cons(
+        1,
+        Box::new(List::Cons(2, Box::new(List::Cons(3, Box::new(List::Nil))))),
+    );
 
     let x = 5;
     let y = &x;
@@ -54,6 +30,24 @@ fn main() {
 
     let name = MyBox::new(String::from("Rust"));
     hello(&name);
+
+    let rc_a = Rc::new(RcList::Cons(
+        5,
+        Rc::new(RcList::Cons(10, Rc::new(RcList::Nil))),
+    ));
+    println!("Count after creating a = {}", Rc::strong_count(&rc_a));
+
+    let rc_b = RcList::Cons(3, Rc::clone(&rc_a));
+    println!("Count after creating b = {}", Rc::strong_count(&rc_a));
+
+    {
+        let rc_c = RcList::Cons(4, Rc::clone(&rc_a));
+        println!("Count after creating c = {}", Rc::strong_count(&rc_a));
+    }
+    println!(
+        "Count after c goes out of scope = {}",
+        Rc::strong_count(&rc_a)
+    );
 }
 
 fn hello(name: &str) -> () {
