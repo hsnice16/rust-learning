@@ -1,4 +1,6 @@
-use smart_pointers::{CustomSmartPointer, List, MyBox, Rc, RcList};
+use std::cell::RefCell;
+
+use smart_pointers::{CustomSmartPointer, List, MyBox, Rc, RcList, RcRefCellList};
 
 fn main() {
     let b = Box::new(5);
@@ -48,6 +50,25 @@ fn main() {
         "Count after c goes out of scope = {}",
         Rc::strong_count(&rc_a)
     );
+
+    let value = Rc::new(RefCell::new(5));
+    let value_a = Rc::new(RcRefCellList::Cons(
+        Rc::clone(&value),
+        Rc::new(RcRefCellList::Nil),
+    ));
+
+    let value_b = RcRefCellList::Cons(Rc::new(RefCell::new(3)), Rc::clone(&value_a));
+    let value_c = RcRefCellList::Cons(Rc::new(RefCell::new(4)), Rc::clone(&value_a));
+
+    println!("before value_a = {value_a:?}");
+    println!("before value_b = {value_b:?}");
+    println!("before value_c = {value_c:?}");
+
+    *value.borrow_mut() += 10;
+
+    println!("after value_a = {value_a:?}");
+    println!("after value_b = {value_b:?}");
+    println!("after value_c = {value_c:?}");
 }
 
 fn hello(name: &str) -> () {
