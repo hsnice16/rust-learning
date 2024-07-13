@@ -1,4 +1,4 @@
-use std::sync::{mpsc, Mutex};
+use std::sync::{mpsc, Arc, Mutex};
 use std::thread;
 use std::time::Duration;
 
@@ -23,6 +23,8 @@ fn main() {
 
     // handle.join().unwrap();
     // handle_2.join().unwrap();
+
+    // --------------------- Mutliple transmitter -- Single receiver ---------------------
 
     // let (tx, rx) = mpsc::channel();
 
@@ -62,12 +64,35 @@ fn main() {
     //     println!("Got: {received}");
     // }
 
-    let m = Mutex::new(5);
+    // --------------------- Shared State Concurrency -- Mutex in a Single thread ---------------------
 
-    {
-        let mut num = m.lock().unwrap();
-        *num = 6;
+    // let m = Mutex::new(5);
+
+    // {
+    //     let mut num = m.lock().unwrap();
+    //     *num = 6;
+    // }
+
+    // println!("m = {m:?}");
+
+    // --------------------- Shared State Concurrency -- Mutex in a Multiple threads ---------------------
+
+    let counter = Arc::new(Mutex::new(0));
+    let mut handles = vec![];
+
+    for _ in 0..10 {
+        let counter = Arc::clone(&counter);
+        let handle = thread::spawn(move || {
+            let mut num = counter.lock().unwrap();
+
+            *num += 1;
+        });
+        handles.push(handle);
     }
 
-    println!("m = {m:?}");
+    for handle in handles {
+        handle.join().unwrap();
+    }
+
+    println!("Result: {}", *counter.lock().unwrap());
 }
