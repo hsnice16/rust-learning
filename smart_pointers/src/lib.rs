@@ -119,3 +119,20 @@ pub enum RcRefCellList {
     Cons(Rc<RefCell<i32>>, Rc<RcRefCellList>),
     Nil,
 }
+
+// Reference Cycle
+
+#[derive(Debug)]
+pub enum RefCycleList {
+    Cons(i32, RefCell<Rc<RefCycleList>>),
+    Nil,
+}
+
+impl RefCycleList {
+    pub fn tail(&self) -> Option<&RefCell<Rc<RefCycleList>>> {
+        match self {
+            RefCycleList::Cons(_, item) => Some(item),
+            RefCycleList::Nil => None,
+        }
+    }
+}
