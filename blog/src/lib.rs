@@ -79,3 +79,49 @@ impl State for Published {
         &post.content
     }
 }
+
+// -- State pattern in Rust way
+
+pub struct RustPost {
+    content: String,
+}
+
+pub struct DraftPost {
+    content: String,
+}
+
+impl RustPost {
+    pub fn new() -> DraftPost {
+        DraftPost {
+            content: String::new(),
+        }
+    }
+
+    pub fn content(&self) -> &str {
+        &self.content
+    }
+}
+
+impl DraftPost {
+    pub fn add_text(&mut self, text: &str) {
+        self.content.push_str(text);
+    }
+
+    pub fn request_review(self) -> PendingReviewPost {
+        PendingReviewPost {
+            content: self.content,
+        }
+    }
+}
+
+pub struct PendingReviewPost {
+    content: String,
+}
+
+impl PendingReviewPost {
+    pub fn approve(self) -> RustPost {
+        RustPost {
+            content: self.content,
+        }
+    }
+}
