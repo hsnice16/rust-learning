@@ -55,4 +55,13 @@ fn main() {
 
     let point = (3, 5);
     print_coordinates(&point);
+
+    // Patterns in IF LET and WHILE LET are refutable,
+    // means they can fail to match for some possible values.
+    // Suppose you are expecting `None` but got `Some(x)`
+
+    // Patterns in FOR, FUNCTION PARAMTERS, and LET VARIBALE DECLARATION
+    // are irrefutable.
+
+    // You can't use refutable patterns on the place irrefutable patters are expected.
 }
