@@ -9,12 +9,12 @@ pub trait Iterator {
 //     fn next(&mut self) -> Option<T>;
 // }
 
-struct Counter {}
+// struct Counter {}
 
-impl Iterator for Counter {
-    type Item = u32;
+// impl Iterator for Counter {
+//     type Item = u32;
 
-    fn next(&mut self) -> Option<Self::Item> {
-        //
-    }
-}
+//     fn next(&mut self) -> Option<Self::Item> {
+//         //
+//     }
+// }
