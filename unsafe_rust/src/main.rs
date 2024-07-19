@@ -1,5 +1,9 @@
 use std::slice;
 
+extern "C" {
+    fn abs(input: i32) -> i32;
+}
+
 fn main() {
     let mut num = 5;
 
@@ -13,7 +17,7 @@ fn main() {
 
     unsafe {
         println!("r1 is: {}", *r1);
-        println!("r is: {}", *r);
+        // println!("r is: {}", *r); // Segmentation fault
 
         dangerous()
     }
@@ -40,6 +44,10 @@ fn main() {
 
     assert_eq!(a, &mut [1, 2, 3]);
     assert_eq!(b, &mut [4, 5, 6]);
+
+    unsafe {
+        println!("Absolute value of -3 according to C: {}", abs(-3));
+    }
 }
 
 unsafe fn dangerous() {}
