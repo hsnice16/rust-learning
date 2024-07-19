@@ -1,5 +1,13 @@
 use std::slice;
 
+unsafe trait Foo {
+    // methods go here
+}
+
+unsafe impl Foo for i32 {
+    // method implementations go here
+}
+
 // C programming language function in Rust
 extern "C" {
     fn abs(input: i32) -> i32;
