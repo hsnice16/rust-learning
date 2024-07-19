@@ -104,6 +104,16 @@ impl fmt::Display for NewPoint {
     }
 }
 
+// Using the Newtype Pattern to Implement External Traits on External Types
+
+struct Wrapper(Vec<String>);
+
+impl fmt::Display for Wrapper {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "[{}]", self.0.join(", "))
+    }
+}
+
 fn main() {
     println!("Hello, world!");
 
@@ -122,4 +132,7 @@ fn main() {
 
     let new_point = NewPoint { x: 2, y: 3 };
     new_point.outline_print();
+
+    let w = Wrapper(vec![String::from("thin"), String::from("wrapper")]);
+    println!("w = {w}");
 }
