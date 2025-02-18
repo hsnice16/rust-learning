@@ -31,11 +31,19 @@ impl User {
 }
 
 // return static array
-pub fn get_users() -> [User; 2] {
-    [
+pub fn get_users() -> Vec<User> {
+    vec![
         User::new("admin", "password", LoginRole::Admin),
         User::new("bob", "password", LoginRole::User),
     ]
+}
+
+fn get_admin_users() {
+    let users: Vec<String> = get_users()
+        .into_iter()
+        .filter(|u| u.role == LoginRole::Admin)
+        .map(|u| u.username)
+        .collect();
 }
 
 pub fn login(username: &str, password: &str) -> Option<LoginAction> {
