@@ -2,8 +2,32 @@ pub fn greet_user(name: &str) -> String {
     format!("Hello {name}")
 }
 
-pub fn login(username: &str, password: &str) -> bool {
-    username.to_lowercase() == "admin" && password == "password"
+#[derive(PartialEq, Debug)]
+pub enum LoginAction {
+    Granted(LoginRole),
+    Denied,
+}
+
+#[derive(PartialEq, Debug)]
+pub enum LoginRole {
+    Admin,
+    User,
+}
+
+pub fn login(username: &str, password: &str) -> Option<LoginAction> {
+    let username = username.to_lowercase();
+
+    if username != "admin" && username != "bob" {
+        return None;
+    }
+
+    if username == "admin" && password == "password" {
+        Some(LoginAction::Granted(LoginRole::Admin))
+    } else if username == "bob" && password == "password" {
+        Some(LoginAction::Granted(LoginRole::User))
+    } else {
+        Some(LoginAction::Denied)
+    }
 }
 
 pub fn read_line() -> String {
@@ -25,9 +49,14 @@ mod tests {
 
     #[test]
     fn test_login() {
-        assert!(login("ADMIN", "password"));
-        assert!(login("admin", "password"));
-        assert!(!login("admin-not", "password"));
-        assert!(!login("admin", "not-password"));
+        assert_eq!(
+            login("ADMIN", "password"),
+            LoginAction::Granted(LoginRole::Admin)
+        );
+        assert_eq!(
+            login("bob", "password"),
+            LoginAction::Granted(LoginRole::User)
+        );
+        assert_eq!(login("admin-not", "password"), LoginAction::Denied);
     }
 }
