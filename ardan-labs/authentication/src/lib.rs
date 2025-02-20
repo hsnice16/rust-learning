@@ -41,14 +41,6 @@ impl User {
     }
 }
 
-// // return static array
-// pub fn get_users() -> Vec<User> {
-//     vec![
-//         User::new("admin", "password", LoginRole::Admin),
-//         User::new("bob", "password", LoginRole::User),
-//     ]
-// }
-
 fn get_default_users() -> HashMap<String, User> {
     let mut users = HashMap::new();
 
@@ -64,7 +56,14 @@ fn get_default_users() -> HashMap<String, User> {
     users
 }
 
-fn get_users() -> HashMap<String, User> {
+pub fn save_users(users: HashMap<String, User>) {
+    let users_path = Path::new("users.json");
+
+    let users_json = serde_json::to_string(&users).unwrap();
+    std::fs::write(users_path, users_json).unwrap();
+}
+
+pub fn get_users() -> HashMap<String, User> {
     let users_path = Path::new("users.json");
     if users_path.exists() {
         // Load the file!
@@ -80,14 +79,6 @@ fn get_users() -> HashMap<String, User> {
     }
 }
 
-// fn get_admin_users() {
-//     let users: Vec<String> = get_users()
-//         .into_iter()
-//         .filter(|u| u.role == LoginRole::Admin)
-//         .map(|u| u.username)
-//         .collect();
-// }
-
 pub fn login(username: &str, password: &str) -> Option<LoginAction> {
     let users = get_users();
     let username = username.to_lowercase();
@@ -101,27 +92,7 @@ pub fn login(username: &str, password: &str) -> Option<LoginAction> {
         }
     }
 
-    // if let Some(user) = users.iter().find(|user| user.username == username) {
-    //     if user.password == password {
-    //         return Some(LoginAction::Granted(user.role.clone()));
-    //     } else {
-    //         return Some(LoginAction::Denied);
-    //     }
-    // }
-
     None
-
-    // if username != "admin" && username != "bob" {
-    //     return None;
-    // }
-
-    // if username == "admin" && password == "password" {
-    //     Some(LoginAction::Granted(LoginRole::Admin))
-    // } else if username == "bob" && password == "password" {
-    //     Some(LoginAction::Granted(LoginRole::User))
-    // } else {
-    //     Some(LoginAction::Denied)
-    // }
 }
 
 pub fn read_line() -> String {
