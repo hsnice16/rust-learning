@@ -1,0 +1,9 @@
+[package]
+name = "recursion"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+async-recursion = "1.1.1"
+futures = "0.3.31"
+tokio = { version = "1.43.0", features = ["full"] }
