@@ -1,0 +1,9 @@
+[package]
+name = "web_service"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+axum = "0.6.19"
+serde = { version = "1.0.218", features = ["derive"] }
+tokio = { version = "1.43.0", features = ["full"] }
