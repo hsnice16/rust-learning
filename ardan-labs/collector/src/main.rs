@@ -1,5 +1,15 @@
-use shared_data::{CollectorCommandV1, DATA_COLLECTOR_ADDRESS};
-use std::{io::Write, sync::mpsc::Sender, time::Instant};
+use shared_data::{CollectorCommandV1, DATA_COLLECTOR_ADDRESS, encode_v1};
+use std::{collections::VecDeque, io::Write, sync::mpsc::Sender, time::Instant};
+use thiserror::Error;
+
+#[derive(Debug, Error)]
+pub enum CollectorError {
+    #[error("Unable to connect to the server")]
+    UnableToConnect,
+
+    #[error("Sending the data failed")]
+    UnableToSend,
+}
 
 pub fn collect_data(tx: Sender<CollectorCommandV1>) {
     // Initialize the sysinfo system
@@ -49,11 +59,29 @@ pub fn collect_data(tx: Sender<CollectorCommandV1>) {
     }
 }
 
-pub fn send_command(command: CollectorCommandV1) {
-    let bytes = shared_data::encode_v1(command);
-    println!("Encoded {} bytes", bytes.len());
-    let mut stream = std::net::TcpStream::connect(DATA_COLLECTOR_ADDRESS).unwrap();
-    stream.write_all(&bytes).unwrap();
+pub fn send_command(bytes: &[u8]) -> Result<(), CollectorError> {
+    let mut stream = std::net::TcpStream::connect(DATA_COLLECTOR_ADDRESS)
+        .map_err(|_| CollectorError::UnableToConnect)?;
+    stream
+        .write_all(bytes)
+        .map_err(|_| CollectorError::UnableToSend)?;
+    Ok(())
+}
+
+pub fn send_queue(queue: &mut VecDeque<Vec<u8>>) -> Result<(), CollectorError> {
+    // Connect
+    let mut stream = std::net::TcpStream::connect(DATA_COLLECTOR_ADDRESS)
+        .map_err(|_| CollectorError::UnableToConnect)?;
+
+    // Send every queue item
+    while let Some(command) = queue.pop_front() {
+        if stream.write_all(&command).is_err() {
+            queue.push_front(command);
+            return Err(CollectorError::UnableToSend);
+        }
+    }
+
+    Ok(())
 }
 
 fn main() {
@@ -65,7 +93,20 @@ fn main() {
     });
 
     // Listen for commands to send
+    let mut data_queue = VecDeque::with_capacity(120);
     while let Ok(command) = rx.recv() {
-        send_command(command);
+        let encoded = encode_v1(&command);
+        data_queue.push_back(encoded);
+        let _ = send_queue(&mut data_queue);
+
+        // // Send all the queued commands
+        // while let Some(command) = send_queue.pop_front() {
+        //     if send_command(&command).is_err() {
+        //         println!("Error sending command");
+        //         send_queue.push_front(command);
+        //         break;
+        //     }
+        // }
+        // let _ = send_command(command)
     }
 }

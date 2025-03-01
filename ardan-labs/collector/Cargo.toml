@@ -6,3 +6,4 @@ edition = "2024"
 [dependencies]
 shared_data = { path = "../shared_data" }
 sysinfo = { version = "0.33.1", features = ["apple-app-store"] }
+thiserror = "2.0.11"
