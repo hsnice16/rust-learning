@@ -2,6 +2,18 @@ use shared_data::{CollectorCommandV1, DATA_COLLECTOR_ADDRESS, encode_v1};
 use std::{collections::VecDeque, io::Write, sync::mpsc::Sender, time::Instant};
 use thiserror::Error;
 
+fn get_uuid() -> u128 {
+    let path = std::path::Path::new("uuid");
+    if path.exists() {
+        let contents = std::fs::read_to_string(path).unwrap();
+        contents.parse::<u128>().unwrap()
+    } else {
+        let uuid = uuid::Uuid::new_v4().as_u128();
+        std::fs::write(path, uuid.to_string()).unwrap();
+        uuid
+    }
+}
+
 #[derive(Debug, Error)]
 pub enum CollectorError {
     #[error("Unable to connect to the server")]
@@ -11,7 +23,7 @@ pub enum CollectorError {
     UnableToSend,
 }
 
-pub fn collect_data(tx: Sender<CollectorCommandV1>) {
+pub fn collect_data(tx: Sender<CollectorCommandV1>, collector_id: u128) {
     // Initialize the sysinfo system
     let mut sys = sysinfo::System::new_all();
 
@@ -39,7 +51,7 @@ pub fn collect_data(tx: Sender<CollectorCommandV1>) {
 
         // Submit
         let send_result = tx.send(CollectorCommandV1::SubmitData {
-            collector_id: 0,
+            collector_id,
             total_memory,
             used_memory,
             average_cpu_usage,
@@ -85,11 +97,12 @@ pub fn send_queue(queue: &mut VecDeque<Vec<u8>>) -> Result<(), CollectorError> {
 }
 
 fn main() {
+    let uuid = get_uuid();
     let (tx, rx) = std::sync::mpsc::channel::<CollectorCommandV1>();
 
     // Start the collector thread
     let _collector_thread = std::thread::spawn(move || {
-        collect_data(tx);
+        collect_data(tx, uuid);
     });
 
     // Listen for commands to send
