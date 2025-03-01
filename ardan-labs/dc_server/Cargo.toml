@@ -1,0 +1,9 @@
+[package]
+name = "dc_server"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1.0.72"
+shared_data = { path = "../shared_data" }
+tokio = { version = "1.29.1", features = ["full"] }
