@@ -1,25 +1,23 @@
 use crate::{
     error::ContractError,
-    msg::{ExecuteMsg, GreetResp, InstantiateMsg, QueryMsg},
+    msg::{ExecuteMsg, InstantiateMsg, QueryMsg},
     state::{ADMINS, DONATION_DENOM},
 };
 use cosmwasm_std::{
-    BankMsg, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult, coins, to_binary,
+    coins, to_binary, BankMsg, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult,
 };
 
 pub fn instantiate(
     deps: DepsMut,
-    _env: Env,
+    env: Env,
     _info: MessageInfo,
     msg: InstantiateMsg,
 ) -> StdResult<Response> {
-    let admins: StdResult<Vec<_>> = msg
-        .admins
-        .into_iter()
-        .map(|addr| deps.api.addr_validate(&addr))
-        .collect();
+    for addr in msg.admins {
+        let admin = deps.api.addr_validate(&addr)?;
+        ADMINS.save(deps.storage, &admin, &env.block.time)?;
+    }
 
-    ADMINS.save(deps.storage, &admins?)?;
     DONATION_DENOM.save(deps.storage, &msg.donation_denom)?;
 
     Ok(Response::new())
@@ -29,26 +27,22 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     use QueryMsg::*;
 
     match msg {
-        Greet {} => to_binary(&query::greet()?),
         AdminsList {} => to_binary(&query::admins_list(deps)?),
     }
 }
 
 mod query {
+    use cosmwasm_std::Order;
+
     use crate::msg::AdminsListResp;
 
     use super::*;
 
-    pub fn greet() -> StdResult<GreetResp> {
-        let resp = GreetResp {
-            message: "Hello World".to_owned(),
-        };
-
-        Ok(resp)
-    }
-
     pub fn admins_list(deps: Deps) -> StdResult<AdminsListResp> {
-        let admins = ADMINS.load(deps.storage)?;
+        let admins: Result<Vec<_>, _> = ADMINS
+            .keys(deps.storage, None, None, Order::Ascending)
+            .collect();
+        let admins = admins?;
         let resp = AdminsListResp { admins };
         Ok(resp)
     }
@@ -70,7 +64,7 @@ pub fn execute(
 }
 
 mod exec {
-    use cosmwasm_std::Event;
+    use cosmwasm_std::{Event, Order};
 
     use crate::error::ContractError;
 
@@ -108,20 +102,21 @@ mod exec {
     }
 
     pub fn leave(deps: DepsMut, info: MessageInfo) -> StdResult<Response> {
-        ADMINS.update(deps.storage, move |admins| -> StdResult<_> {
-            let admins = admins
-                .into_iter()
-                .filter(|admin| *admin != info.sender)
-                .collect();
-            Ok(admins)
-        })?;
+        ADMINS.remove(deps.storage, &info.sender);
 
-        Ok(Response::new())
+        let resp = Response::new()
+            .add_attribute("action", "leave")
+            .add_attribute("sender", info.sender.as_str());
+
+        Ok(resp)
     }
 
     pub fn donate(deps: DepsMut, info: MessageInfo) -> Result<Response, ContractError> {
         let denom = DONATION_DENOM.load(deps.storage)?;
-        let admins = ADMINS.load(deps.storage)?;
+        let admins: Result<Vec<_>, _> = ADMINS
+            .keys(deps.storage, None, None, Order::Ascending)
+            .collect();
+        let admins = admins?;
 
         let donation = cw_utils::may_pay(&info, &denom)?.u128();
 
@@ -386,73 +381,4 @@ mod tests {
             }
         )
     }
-
-    #[test]
-    fn greet_query() {
-        let mut app = App::default();
-
-        let code = ContractWrapper::new(execute, instantiate, query);
-        let code_id = app.store_code(Box::new(code));
-
-        let addr = app
-            .instantiate_contract(
-                code_id,
-                Addr::unchecked("owner"),
-                &InstantiateMsg {
-                    admins: vec![],
-                    donation_denom: "eth".to_owned(),
-                },
-                &[],
-                "Contract",
-                None,
-            )
-            .unwrap();
-
-        let resp: GreetResp = app
-            .wrap()
-            .query_wasm_smart(addr, &QueryMsg::Greet {})
-            .unwrap();
-
-        assert_eq!(
-            resp,
-            GreetResp {
-                message: "Hello World".to_owned()
-            }
-        )
-    }
-
-    // Without Multitest
-
-    // use cosmwasm_std::{
-    //     from_binary,
-    //     testing::{mock_dependencies, mock_env, mock_info},
-    // };
-
-    // use super::*;
-
-    // #[test]
-    // fn greet_query() {
-    //     let mut deps = mock_dependencies();
-    //     let env = mock_env();
-
-    //     instantiate(
-    //         deps.as_mut(),
-    //         env.clone(),
-    //         mock_info("sender", &[]),
-    //         Empty {},
-    //     )
-    //     .unwrap();
-
-    //     // let resp = query::greet().unwrap();
-
-    //     let resp = query(deps.as_ref(), env, QueryMsg::Greet {}).unwrap();
-    //     let resp: GreetResp = from_binary(&resp).unwrap();
-
-    //     assert_eq!(
-    //         resp,
-    //         GreetResp {
-    //             message: "Hello World".to_owned()
-    //         }
-    //     )
-    // }
 }
